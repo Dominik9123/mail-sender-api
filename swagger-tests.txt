@@ -1,0 +1,27 @@
+=== REGISTER ===
+{
+  "name": "Test Client App",
+  "email": "test@example.com",
+  "registrationPassword": "q#w@85"
+}
+
+=== SEND MAIL ===
+{
+  "recipient": "receiver@example.com",
+  "subject": "Test message",
+  "body": "Hello from MailSender!"
+}
+
+=== INVALID REGISTER ===
+{
+  "name": "Test",
+  "email": "test@test.com",
+  "registrationPassword": "wrong"
+}
+
+=== EMPTY MAIL ===
+{
+  "recipient": "",
+  "subject": "",
+  "body": ""
+}
