@@ -12,7 +12,7 @@ Dokumentacja `README.md` została przygotowana z pomocą Codexa.
 - wybór providera przez konfigurację oraz Dependency Injection
 - reguły biznesowe dla wysyłanych wiadomości:
   - dodanie prefiksu `[Q]`, gdy temat kończy się znakiem `?`
-  - otoczenie nazwiska studenta w treści tagami `[student.name]` oraz `[/student.surname]`
+  - otoczenie nazwiska studenta w treści tagami `[student.surname]` oraz `/[student.surname]/`
 - przechowywanie zarejestrowanych aplikacji i logów wysyłki w pamięci aplikacji
 - izolacja logów, dzięki której każda aplikacja widzi tylko własne wpisy
 - dokumentacja API w Swagger UI
@@ -120,7 +120,7 @@ Przykładowa odpowiedź:
   "email": {
     "to": "odbiorca@example.com",
     "subject": "[Q] Czy działa?",
-    "body": "Test [student.name]Skutecki[/student.surname] wiadomości"
+    "body": "Test [student.surname]Skutecki/[student.surname]/ wiadomości"
   }
 }
 ```

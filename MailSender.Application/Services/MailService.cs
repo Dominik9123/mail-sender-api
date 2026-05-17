@@ -47,7 +47,7 @@ public class MailService
         body = Regex.Replace(
             body,
             Regex.Escape(StudentSurname),
-            "[student.name]$0[/student.surname]",
+            "[student.surname]$0/[student.surname]/",
             RegexOptions.IgnoreCase
         );
 

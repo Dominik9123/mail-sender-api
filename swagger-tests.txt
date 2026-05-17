@@ -112,7 +112,7 @@ Oczekiwana odpowiedź:
   "email": {
     "to": "dominikskutecki@gmail.com",
     "subject": "[Q] Czy wiadomość działa?",
-    "body": "Test [student.name]Skutecki[/student.surname] przez Swagger"
+    "body": "Test [student.surname]Skutecki/[student.surname]/ przez Swagger"
   }
 }
 
@@ -137,7 +137,7 @@ Przykładowa odpowiedź:
     "appId": "demo-app-a",
     "to": "dominikskutecki@gmail.com",
     "subject": "[Q] Czy wiadomość działa?",
-    "body": "Test [student.name]Skutecki[/student.surname] przez Swagger",
+    "body": "Test [student.surname]Skutecki/[student.surname]/ przez Swagger",
     "isSuccess": true,
     "errorMessage": null,
     "sentAt": "DATA_I_GODZINA"
@@ -250,7 +250,7 @@ W formularzu:
 Oczekiwany wynik:
 - formularz wysyła wiadomość przez API
 - w odpowiedzi widać prefiks [Q]
-- w body widać tagi [student.name] i [/student.surname]
+- w body widać tagi [student.surname] i /[student.surname]/
 
 ==================================================
 10. KOMENDY DO URUCHOMIENIA WEBCLIENTA
