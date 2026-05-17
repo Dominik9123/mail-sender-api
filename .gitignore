@@ -11,6 +11,16 @@ obj/
 .idea/
 .vscode/
 
+# Local tooling / generated runtime files
+*.lscache
+api-run.out.log
+api-run.err.log
+api-run.pid
+msbuild-api.log
+
+# WebClient dependencies
+WebClient/node_modules/
+
 # OS
 .DS_Store
 Thumbs.db

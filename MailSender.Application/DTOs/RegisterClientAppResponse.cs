@@ -1,10 +1,9 @@
 namespace MailSender.Application.DTOs;
 
-//Zwracanie ID aplikacji / JWT 
 public class RegisterClientAppResponse
 {
-    public Guid Id { get; set; }
-
-    public string Token { get; set; } = string.Empty;
+    public string AppId { get; set; } = string.Empty;
+    public string AppName { get; set; } = string.Empty;
+    public string Key { get; set; } = string.Empty;
 
 }

@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MailSender Client Demo</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f4f6f8;
+      color: #1f2937;
+    }
+
+    .page {
+      max-width: 760px;
+      margin: 48px auto;
+      padding: 32px;
+      background: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+    }
+
+    h1 {
+      margin-top: 0;
+      color: #111827;
+    }
+
+    .note {
+      padding: 12px 16px;
+      background: #eef2ff;
+      border-left: 4px solid #4f46e5;
+      border-radius: 8px;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    form {
+      display: grid;
+      gap: 18px;
+      margin-top: 24px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 600;
+    }
+
+    input,
+    textarea {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 10px 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      font: inherit;
+    }
+
+    input:focus,
+    textarea:focus {
+      outline: none;
+      border-color: #4f46e5;
+      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+    }
+
+    button {
+      width: fit-content;
+      padding: 10px 18px;
+      border: none;
+      border-radius: 8px;
+      background: #4f46e5;
+      color: #ffffff;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #4338ca;
+    }
+
+    pre {
+      margin-top: 24px;
+      padding: 16px;
+      background: #111827;
+      color: #d1fae5;
+      border-radius: 8px;
+      overflow-x: auto;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <h1>MailSender Client Demo</h1>
+
+    <p class="note">
+      Strona HTML zostala przygotowana z pomoca Codexa. Biblioteka TypeScript
+      uzywana do komunikacji z API zostala wygenerowana narzedziem OpenAPI
+      Generator na podstawie specyfikacji OpenAPI.
+    </p>
+
+    <form id="mailForm">
+      <div>
+        <label for="token">Token JWT</label>
+        <textarea id="token" rows="4" required></textarea>
+      </div>
+
+      <div>
+        <label for="to">Odbiorca</label>
+        <input id="to" type="email" required />
+      </div>
+
+      <div>
+        <label for="subject">Temat</label>
+        <input id="subject" type="text" required />
+      </div>
+
+      <div>
+        <label for="body">Tresc</label>
+        <textarea id="body" rows="6" required></textarea>
+      </div>
+
+      <button type="submit">Wyslij mail</button>
+    </form>
+
+    <pre id="result"></pre>
+  </main>
+
+  <script type="module">
+    import { MailApi, Configuration } from "./generated-js/index.js";
+
+    const form = document.getElementById("mailForm");
+    const result = document.getElementById("result");
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+
+      const token = document.getElementById("token").value.trim();
+      const to = document.getElementById("to").value.trim();
+      const subject = document.getElementById("subject").value.trim();
+      const body = document.getElementById("body").value.trim();
+
+      const api = new MailApi(new Configuration({
+        basePath: "http://localhost:5215",
+        apiKey: async () => `Bearer ${token}`
+      }));
+
+      try {
+        const response = await api.mailSendPost({
+          sendMailRequest: {
+            to,
+            subject,
+            body
+          }
+        });
+
+        result.textContent = JSON.stringify(response, null, 2);
+      } catch (error) {
+        result.textContent = String(error);
+      }
+    });
+  </script>
+</body>
+</html>

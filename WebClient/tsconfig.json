@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ES2020",
+    "moduleResolution": "Bundler",
+    "outDir": "generated-js",
+    "rootDir": "generated-ts",
+    "strict": false,
+    "skipLibCheck": true,
+    "declaration": true
+  },
+  "include": [
+    "generated-ts/**/*.ts"
+  ]
+}

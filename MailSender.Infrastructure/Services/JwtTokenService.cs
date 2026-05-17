@@ -1,32 +1,44 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using MailSender.Application.Interfaces;
 using Microsoft.IdentityModel.Tokens;
 
 namespace MailSender.Infrastructure.Services;
 
-public class JwtTokenService
+public class JwtTokenService : ITokenService
 {
-    private const string SecretKey = "SuperSecretKeyForMailSenderProject123456!"; // Klucz podpisujacy JWT
-    private readonly byte[] _key = Encoding.UTF8.GetBytes(SecretKey);
+    private readonly byte[] _key;
 
-    public string GenerateToken(Guid clientAppId, string email)
+    public JwtTokenService(string secretKey)
     {
-        var claims = new[] //Przechowywanie danych w tokenie: ID aplikacji, email
+        if (string.IsNullOrWhiteSpace(secretKey))
         {
-            new Claim("ClientAppId", clientAppId.ToString()),
-            new Claim(ClaimTypes.Email, email)
+            throw new ArgumentException("JWT secret cannot be empty.", nameof(secretKey));
+        }
+
+        _key = Encoding.UTF8.GetBytes(secretKey);
+    }
+
+    public string GenerateToken(string appId, string appName)
+    {
+        // Dane aplikacji zapisywane w tokenie.
+        var claims = new[]
+        {
+            new Claim("AppId", appId),
+            new Claim("AppName", appName)
         };
 
-        // Podpis tokena za pomoca klucza symetrycznego
+        // Podpis tokena za pomoca klucza symetrycznego.
         var credentials = new SigningCredentials(
            new SymmetricSecurityKey(_key),
-           SecurityAlgorithms.HmacSha256 //Algorytm podpisu
+           SecurityAlgorithms.HmacSha256
        );
 
-        var token = new JwtSecurityToken( //token wazny 7 dni
+        // Token jest wazny przez 90 dni.
+        var token = new JwtSecurityToken(
             claims: claims,
-            expires: DateTime.UtcNow.AddDays(7),
+            expires: DateTime.UtcNow.AddDays(90),
             signingCredentials: credentials
         );
 

@@ -1,21 +1,18 @@
 using Microsoft.AspNetCore.Mvc;
 using MailSender.Application.DTOs;
-using MailSender.Domain.Entities;
-using MailSender.Infrastructure.Services;
-using MailSender.Infrastructure.Storage;
+using MailSender.Application.Services;
 
 namespace MailSender.Api.Controllers;
 
 [ApiController]
-[Route("client-app")] // Bazowy adres dla endpointow klienta
+[Route("client-app")]
 public class ClientAppController : ControllerBase
 {
-    private readonly JwtTokenService _jwtTokenService; // Serwis do generowania tokenow JWT
+    private readonly ClientAppService _clientAppService;
 
-    public ClientAppController()
+    public ClientAppController(ClientAppService clientAppService)
     {
-        // Inicjalizacja serwisu odpowiedzialnego za generacje tokenow JWT
-        _jwtTokenService = new JwtTokenService();
+        _clientAppService = clientAppService;
     }
 
     [HttpPost("register")]
@@ -24,37 +21,27 @@ public class ClientAppController : ControllerBase
     )
     {
 
-        if (request.RegistrationPassword != "q#w@85") // Sprawdzenie poprawnosci hasla rejestracyjnego zgodnie z wymaganiami projektu - 2 ostatnie cyfry indeksu
-
+        // Haslo wymagane do rejestracji aplikacji klienckiej.
+        if (request.Pass != "q##waQ85")
         {
-            return Unauthorized("Invalid registration password.");
+            return StatusCode(StatusCodes.Status403Forbidden, new
+            {
+                error = "Invalid index-based password 85"
+            });
+        }
+        var result = _clientAppService.Register(
+            request.AppId,
+            request.AppName
+        );
+
+        if (result.ExistingClientApp != null)
+        {
+            return Conflict(new
+            {
+                error = $"Client app duplication. Existing {result.ExistingClientApp.AppId} {result.ExistingClientApp.AppName}"
+            });
         }
 
-        // Utworzenie nowej aplikacji-klienta
-        var clientApp = new ClientApp
-        {
-            Id = Guid.NewGuid(),
-            Name = request.Name,
-            Email = request.Email
-        };
-
-        // Generacja tokena JWT na podstawie ID i emaila
-        var token = _jwtTokenService.GenerateToken(
-            clientApp.Id,
-            clientApp.Email
-        );
-        // Przypisanie tokena do aplikacji
-        clientApp.Token = token;
-
-        // Zapisanie aplikacji w pamieci (symulacja bazy danych)
-        InMemoryDataStore.ClientApps.Add(clientApp);
-
-        // Zwrocenie ID aplikacji oraz tokena JWT
-        return Ok(new RegisterClientAppResponse
-        {
-            Id = clientApp.Id,
-            Token = token
-
-        });
+        return Ok(result.Response);
     }
 }

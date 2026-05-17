@@ -1,27 +1,277 @@
-=== REGISTER ===
+MAILSENDER - SCENARIUSZ TESTOWANIA W SWAGGERZE
+Plik przygotowany z pomocą Codexa.
+
+Adres Swaggera:
+http://localhost:5215/swagger
+
+==================================================
+1. REJESTRACJA NOWEJ APLIKACJI KLIENCKIEJ
+==================================================
+
+Endpoint:
+POST /client-app/register
+
+Body:
 {
-  "name": "Test Client App",
-  "email": "test@example.com",
-  "registrationPassword": "q#w@85"
+  "appId": "demo-app-a",
+  "appName": "Demo App A",
+  "pass": "q##waQ85"
 }
 
-=== SEND MAIL ===
+Oczekiwany wynik:
+- HTTP 200 OK
+- odpowiedź zawiera:
+  - appId
+  - appName
+  - key
+
+Przykładowa odpowiedź:
 {
-  "recipient": "receiver@example.com",
-  "subject": "Test message",
-  "body": "Hello from MailSender!"
+  "appId": "demo-app-a",
+  "appName": "Demo App A",
+  "key": "TU_POJAWI_SIE_TOKEN_JWT"
 }
 
-=== INVALID REGISTER ===
+Po otrzymaniu tokenu:
+1. Kliknij przycisk Authorize w Swaggerze.
+2. Wklej:
+Bearer TU_WKLEJ_TOKEN_JWT
+
+==================================================
+2. TEST BŁĘDNEGO HASŁA REJESTRACYJNEGO
+==================================================
+
+Endpoint:
+POST /client-app/register
+
+Body:
 {
-  "name": "Test",
-  "email": "test@test.com",
-  "registrationPassword": "wrong"
+  "appId": "wrong-pass-app",
+  "appName": "Wrong Pass App",
+  "pass": "zle-haslo"
 }
 
-=== EMPTY MAIL ===
+Oczekiwany wynik:
+- HTTP 403 Forbidden
+
+Oczekiwana odpowiedź:
 {
-  "recipient": "",
-  "subject": "",
-  "body": ""
+  "error": "Invalid index-based password 85"
 }
+
+==================================================
+3. TEST DUPLIKATU APLIKACJI
+==================================================
+
+Endpoint:
+POST /client-app/register
+
+Body:
+{
+  "appId": "demo-app-a",
+  "appName": "Demo App A",
+  "pass": "q##waQ85"
+}
+
+Oczekiwany wynik:
+- HTTP 409 Conflict
+
+Oczekiwana odpowiedź:
+{
+  "error": "Client app duplication. Existing demo-app-a Demo App A"
+}
+
+==================================================
+4. WYSYŁKA WIADOMOŚCI
+==================================================
+
+Endpoint:
+POST /mail/send
+
+Uwaga:
+Przed wykonaniem tego testu musisz być zalogowany tokenem aplikacji demo-app-a.
+
+Body:
+{
+  "to": "dominikskutecki@gmail.com",
+  "subject": "Czy wiadomość działa?",
+  "body": "Test Skutecki przez Swagger"
+}
+
+Oczekiwany wynik:
+- HTTP 200 OK
+- status: "queued"
+- temat dostaje prefiks [Q]
+- nazwisko Skutecki zostaje otoczone tagami
+
+Oczekiwana odpowiedź:
+{
+  "appId": "demo-app-a",
+  "appName": "Demo App A",
+  "status": "queued",
+  "email": {
+    "to": "dominikskutecki@gmail.com",
+    "subject": "[Q] Czy wiadomość działa?",
+    "body": "Test [student.name]Skutecki[/student.surname] przez Swagger"
+  }
+}
+
+==================================================
+5. POBRANIE LOGÓW AKTUALNEJ APLIKACJI
+==================================================
+
+Endpoint:
+GET /mail-log
+
+Uwaga:
+Nadal używaj tokenu aplikacji demo-app-a.
+
+Oczekiwany wynik:
+- HTTP 200 OK
+- lista zawiera log wysłanej przed chwilą wiadomości
+
+Przykładowa odpowiedź:
+[
+  {
+    "id": "TU_POJAWI_SIE_ID_LOGU",
+    "appId": "demo-app-a",
+    "to": "dominikskutecki@gmail.com",
+    "subject": "[Q] Czy wiadomość działa?",
+    "body": "Test [student.name]Skutecki[/student.surname] przez Swagger",
+    "isSuccess": true,
+    "errorMessage": null,
+    "sentAt": "DATA_I_GODZINA"
+  }
+]
+
+Skopiuj wartość pola id - będzie potrzebna w następnym kroku.
+
+==================================================
+6. POBRANIE KONKRETNEGO LOGU
+==================================================
+
+Endpoint:
+GET /mail-log/{id}
+
+Parametr id:
+Wklej id skopiowane z poprzedniego kroku.
+
+Oczekiwany wynik:
+- HTTP 200 OK
+- odpowiedź zawiera jeden konkretny log należący do demo-app-a
+
+==================================================
+7. TEST IZOLACJI LOGÓW MIĘDZY APLIKACJAMI
+==================================================
+
+Krok A - zarejestruj drugą aplikację:
+
+Endpoint:
+POST /client-app/register
+
+Body:
+{
+  "appId": "demo-app-b",
+  "appName": "Demo App B",
+  "pass": "q##waQ85"
+}
+
+Oczekiwany wynik:
+- HTTP 200 OK
+- skopiuj nowy token JWT
+
+Krok B - zmień autoryzację w Swaggerze:
+1. Kliknij Authorize.
+2. Wklej token aplikacji demo-app-b:
+Bearer TU_WKLEJ_TOKEN_DEMO_APP_B
+
+Krok C - sprawdź listę logów:
+
+Endpoint:
+GET /mail-log
+
+Oczekiwany wynik:
+- HTTP 200 OK
+- odpowiedź:
+[]
+
+Krok D - spróbuj pobrać log aplikacji demo-app-a:
+
+Endpoint:
+GET /mail-log/{id}
+
+Parametr id:
+Wklej id logu utworzonego przez demo-app-a.
+
+Oczekiwany wynik:
+- HTTP 404 Not Found
+
+Oczekiwana odpowiedź:
+Mail log not found.
+
+==================================================
+8. TEST ZMIANY PROVIDERA MAILI
+==================================================
+
+W pliku MailSender.Api/appsettings.json ustaw:
+
+dla Brevo:
+"MailProvider": "Brevo"
+
+albo dla Mailtrapa:
+"MailProvider": "Mailtrap"
+
+Po zmianie:
+1. Zatrzymaj backend.
+2. Uruchom go ponownie.
+3. Powtórz test z punktu 4.
+
+Oczekiwany wynik:
+- wiadomość zostaje poprawnie wysłana przez wybranego providera
+- endpoint /mail/send działa bez zmian
+
+==================================================
+9. WEBCLIENT
+==================================================
+
+Uruchom prosty serwer w folderze WebClient:
+
+python -m http.server 8000
+
+Otwórz:
+http://127.0.0.1:8000/
+
+W formularzu:
+- wklej token JWT
+- wpisz odbiorcę
+- wpisz temat zakończony pytajnikiem
+- wpisz treść zawierającą nazwisko Skutecki
+
+Oczekiwany wynik:
+- formularz wysyła wiadomość przez API
+- w odpowiedzi widać prefiks [Q]
+- w body widać tagi [student.name] i [/student.surname]
+
+==================================================
+10. KOMENDY DO URUCHOMIENIA WEBCLIENTA
+==================================================
+
+Najpierw przejdz do glownego folderu projektu:
+
+cd C:\Users\skute\Desktop\MailSender
+
+Potem przejdz do folderu WebClient:
+
+cd WebClient
+
+Uruchom prosty serwer HTTP na porcie 8000:
+
+python -m http.server 8000
+
+Nastepnie otworz w przegladarce:
+
+http://127.0.0.1:8000/
+
+Zeby zatrzymac serwer:
+
+Ctrl+C

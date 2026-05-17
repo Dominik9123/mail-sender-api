@@ -4,19 +4,19 @@ public class MailLog
 {
     public Guid Id { get; set; }
 
-    public Guid ClientAppId { get; set; } // Mowi ktora aplikacja wyslala maila
+    public string AppId { get; set; } = string.Empty;
 
-    public string Recipient { get; set; } = string.Empty; // Adres odbiorcy
+    public string To { get; set; } = string.Empty;
 
-    public string Subject { get; set; } = string.Empty; // Temat Maila
+    public string Subject { get; set; } = string.Empty;
 
-    public string Body { get; set; } = string.Empty; // Tresc Maila
+    public string Body { get; set; } = string.Empty;
 
-    public bool IsSuccess { get; set; } // Czy wyslanie sie udalo
+    public bool IsSuccess { get; set; }
 
-    public string? ErrorMessage { get; set; } // Tresc Bledu
+    public string? ErrorMessage { get; set; }
 
-    public DateTime SentAt { get; set; } = DateTime.UtcNow; // Data Proby wysylki
+    public DateTime SentAt { get; set; } = DateTime.UtcNow;
 
 }
 

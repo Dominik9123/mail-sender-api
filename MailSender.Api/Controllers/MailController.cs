@@ -2,9 +2,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MailSender.Application.DTOs;
-using MailSender.Application.Interfaces;
-using MailSender.Domain.Entities;
-using MailSender.Infrastructure.Storage;
+using MailSender.Application.Services;
 
 namespace MailSender.Api.Controllers;
 
@@ -12,71 +10,47 @@ namespace MailSender.Api.Controllers;
 [Route("mail")]
 public class MailController : ControllerBase
 {
-    private readonly IMailSenderProvider _mailSenderProvider;
+    private readonly MailService _mailService;
 
-    public MailController(IMailSenderProvider mailSenderProvider)
+    public MailController(MailService mailService)
     {
-        // Provider wstrzykiwany przez Dependency Injection (mozna latwo podmienic implementacje)
-        _mailSenderProvider = mailSenderProvider;
+        _mailService = mailService;
     }
 
-    [Authorize] // Endpoint dostepny tylko z poprawnym tokenem JWT
+    [Authorize]
     [HttpPost("send")]
     public async Task<ActionResult<SendMailResponse>> SendMail(
         SendMailRequest request
     )
     {
-        // Pobranie ID aplikacji z tokena JWT
-        var clientAppId = User.FindFirstValue("ClientAppId");
+        // Id aplikacji jest przechowywane w tokenie JWT.
+        var appId = User.FindFirstValue("AppId");
 
-        if (string.IsNullOrWhiteSpace(clientAppId))
+        if (string.IsNullOrWhiteSpace(appId))
         {
             return Unauthorized("Invalid token.");
         }
 
-        // Podstawowa walidacja danych wejsciowych.
-        if (string.IsNullOrWhiteSpace(request.Recipient) ||
+        // Podstawowa walidacja danych przed wysylka.
+        if (string.IsNullOrWhiteSpace(request.To) ||
             string.IsNullOrWhiteSpace(request.Subject) ||
             string.IsNullOrWhiteSpace(request.Body))
         {
-            return BadRequest("Recipient, subject and body are required.");
+            return BadRequest("To, subject and body are required.");
         }
 
-        // Wyslanie maila przez aktualnie skonfigurowanego providera
-        var isSent = await _mailSenderProvider.SendEmailAsync(
-            request.Recipient,
-            request.Subject,
-            request.Body
-        );
+        var response = await _mailService.SendAsync(appId, request);
 
-        // Zapis logu wysylki (symulacja bazy danych)
-        var mailLog = new MailLog
+        if (response == null)
         {
-            Id = Guid.NewGuid(), // unikalne id logu
-            ClientAppId = Guid.Parse(clientAppId), //zamienia ID pobrane z tokena JWT ze stringa na Guid
-            Recipient = request.Recipient,
-            Subject = request.Subject,
-            Body = request.Body,
-            IsSuccess = isSent, //zapis czy provider zwrocil sukces
-            ErrorMessage = isSent ? null : "Mail sending failed.",
-            SentAt = DateTime.UtcNow
-        };
-
-        InMemoryDataStore.MailLogs.Add(mailLog);
-
-        if (!isSent)
-        {
-            return StatusCode(500, new SendMailResponse
-            {
-                Success = false,
-                Message = "Mail sending failed."
-            });
+            return Unauthorized("Client application not found.");
         }
 
-        return Ok(new SendMailResponse
+        if (response.Status == "failed")
         {
-            Success = true,
-            Message = "Mail sent successfully."
-        });
+            return StatusCode(500, response);
+        }
+
+        return Ok(response);
     }
 }
